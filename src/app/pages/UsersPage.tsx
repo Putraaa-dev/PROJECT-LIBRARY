@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, Search, Edit, Trash2, User, Shield, Users, AlertCircle } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Shield, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { useLibrary } from '../context/LibraryContext';
@@ -7,17 +7,27 @@ import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Pagination } from '../components/ui/Pagination';
-import type { User as UserType, UserRole } from '../types';
+import type { User as UserType, UserRole, UserStatus } from '../types';
+
+type UserForm = {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  address: string;
+  role: UserRole;
+  status: UserStatus;
+};
 
 const ITEMS_PER_PAGE = 10;
 
-const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
+const ROLE_OPTIONS: { value: UserRole; label: string }[] = [ 
   { value: 'admin', label: 'Administrator' },
   { value: 'petugas', label: 'Petugas' },
   { value: 'user', label: 'Anggota' },
 ];
 
-const EMPTY_FORM = { name: '', email: '', password: '', phone: '', address: '', role: 'user' as UserRole, status: 'active' as const };
+const EMPTY_FORM: UserForm = { name: '', email: '', password: '', phone: '', address: '', role: 'user', status: 'active' };
 
 export function UsersPage() {
   const { currentUser } = useAuth();
@@ -29,7 +39,7 @@ export function UsersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editUser, setEditUser] = useState<UserType | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserType | null>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState<UserForm>(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   if (currentUser?.role !== 'admin') {
@@ -85,9 +95,9 @@ export function UsersPage() {
     setFormOpen(false);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
-    const ok = deleteUser(deleteTarget.id);
+    const ok = await deleteUser(deleteTarget.id);
     if (ok) toast.success(`Pengguna "${deleteTarget.name}" berhasil dihapus.`);
     else toast.error('Tidak dapat menghapus pengguna yang memiliki peminjaman aktif.');
     setDeleteTarget(null);

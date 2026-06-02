@@ -8,7 +8,6 @@ import { BookCard } from '../components/books/BookCard';
 import { BookForm } from '../components/books/BookForm';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Pagination } from '../components/ui/Pagination';
-import { Badge } from '../components/ui/Badge';
 import type { Book } from '../types';
 import { CATEGORIES, CATEGORY_COLORS } from '../data/mockData';
 
@@ -51,9 +50,9 @@ export function BooksPage() {
 
   const handleBorrow = (book: Book) => setBorrowTarget(book);
 
-  const confirmBorrow = () => {
+  const confirmBorrow = async () => {
     if (!borrowTarget || !currentUser) return;
-    const result = requestLoan(currentUser.id, currentUser.name, currentUser.email, borrowTarget.id);
+    const result = await requestLoan(currentUser.id, currentUser.name, currentUser.email, borrowTarget.id);
     if (result.success) toast.success(result.message);
     else toast.error(result.message);
     setBorrowTarget(null);
@@ -61,9 +60,9 @@ export function BooksPage() {
 
   const handleDelete = (book: Book) => setDeleteTarget(book);
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
-    const ok = deleteBook(deleteTarget.id);
+    const ok = await deleteBook(deleteTarget.id);
     if (ok) toast.success(`Buku "${deleteTarget.title}" berhasil dihapus.`);
     else toast.error('Tidak dapat menghapus buku yang sedang dipinjam.');
     setDeleteTarget(null);

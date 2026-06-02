@@ -32,6 +32,7 @@ export const DEFAULT_USERS: User[] = [
     address: 'Jl. Merdeka No. 1, Jakarta',
     memberSince: '2022-01-01',
     status: 'active',
+    avatar: 'https://api.dicebear.com/6.x/initials/png?seed=AdminBudi&backgroundColor=4f46e5',
     totalLoans: 0,
   },
   {
@@ -44,6 +45,7 @@ export const DEFAULT_USERS: User[] = [
     address: 'Jl. Sudirman No. 5, Bandung',
     memberSince: '2022-03-15',
     status: 'active',
+    avatar: 'https://api.dicebear.com/6.x/initials/png?seed=PetugasSiti&backgroundColor=0ea5e9',
     totalLoans: 0,
   },
   {
@@ -56,6 +58,7 @@ export const DEFAULT_USERS: User[] = [
     address: 'Jl. Gatot Subroto No. 10, Surabaya',
     memberSince: '2023-02-20',
     status: 'active',
+    avatar: 'https://api.dicebear.com/6.x/initials/png?seed=AnggotaAhmad&backgroundColor=22c55e',
     totalLoans: 5,
   },
   {

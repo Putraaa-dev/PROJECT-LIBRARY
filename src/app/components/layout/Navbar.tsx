@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
   BookOpen, Bell, Search, Sun, Moon, Menu, X, ChevronDown,
-  User, Settings, LogOut, Shield
+  User, LogOut, Shield
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -24,6 +24,8 @@ const ROLE_COLORS: Record<string, string> = {
   petugas: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   user: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
 };
+
+const LOGO_IMG = '/icons/LibraryTogether-removebg-preview.png';
 
 export function Navbar({ onToggleSidebar, sidebarOpen }: NavbarProps) {
   const { currentUser, logout, isAuthenticated } = useAuth();
@@ -58,11 +60,13 @@ export function Navbar({ onToggleSidebar, sidebarOpen }: NavbarProps) {
 
         {/* Logo */}
         <Link to={isAuthenticated ? '/app/dashboard' : '/'} className="flex items-center gap-2 min-w-max">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-sm">
-            <BookOpen size={16} className="text-white" />
-          </div>
+          <img
+            src={LOGO_IMG}
+            alt="LibraryTogether Logo"
+            className="w-10 h-10 object-contain"
+          />
           <span className="hidden sm:block" style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.1rem', fontWeight: 600, color: isDark ? '#f1f5f9' : '#1e293b' }}>
-            Perpustakaan
+            LibraryTogether
           </span>
         </Link>
 

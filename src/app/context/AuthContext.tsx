@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { AuthUser } from '../types';
 
-const API_URL = '';
+const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 interface AuthContextType {
   currentUser: AuthUser | null;
@@ -10,7 +10,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
-  updateProfile: (data: Partial<AuthUser>) => void;
+  updateProfile: (data: Partial<AuthUser>) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -84,11 +84,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(STORAGE_KEY_AUTH);
   }, []);
 
-  const updateProfile = useCallback((data: Partial<AuthUser>) => {
-    if (!currentUser) return;
-    const updated = { ...currentUser, ...data };
-    setCurrentUser(updated);
-    localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(updated));
+  const updateProfile = useCallback(async (data: Partial<AuthUser>) => {
+    if (!currentUser) return { success: false, message: 'Pengguna tidak ditemukan.' };
+
+    try {
+      const res = await fetch(`${API_URL}/api/users/${currentUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (!res.ok) return { success: false, message: result.error || 'Gagal memperbarui profil.' };
+
+      const updated = { ...currentUser, ...data };
+      setCurrentUser(updated);
+      localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(updated));
+      return { success: true, message: 'Profil berhasil diperbarui!' };
+    } catch {
+      return { success: false, message: 'Gagal terhubung ke server.' };
+    }
   }, [currentUser]);
 
   return (

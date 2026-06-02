@@ -51,8 +51,12 @@ export function Register() {
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-7 text-center">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <BookOpen size={22} className="text-white" />
+            <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center mx-auto mb-3 shadow-md">
+              <img
+                src="/icons/LibraryTogether-removebg-preview.png"
+                alt="LibraryTogether Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <h1 className="text-white" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.3rem' }}>
               Daftar Anggota Baru

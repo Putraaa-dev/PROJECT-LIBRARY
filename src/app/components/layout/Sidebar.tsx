@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router';
 import {
   LayoutDashboard, BookOpen, Users, ClipboardList, User, BookMarked,
-  History, ChevronRight, Library
+  ChevronRight, Library
 } from 'lucide-react';
 import type { UserRole } from '../../types';
 

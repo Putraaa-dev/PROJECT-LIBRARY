@@ -30,11 +30,6 @@ export function Login() {
     }
   };
 
-  const DEMOS = [
-    { label: 'Admin', email: 'admin@perpus.id', pw: 'admin123', color: 'text-red-600' },
-    { label: 'Petugas', email: 'petugas@perpus.id', pw: 'petugas123', color: 'text-blue-600' },
-    { label: 'User', email: 'user@perpus.id', pw: 'user123', color: 'text-green-600' },
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
@@ -43,8 +38,12 @@ export function Login() {
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-8 text-center">
-            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <BookOpen size={26} className="text-white" />
+            <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg mx-auto mb-3">
+              <img
+                src="/icons/LibraryTogether-removebg-preview.png"
+                alt="LibraryTogether Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <h1 className="text-white" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.4rem' }}>
               Selamat Datang
@@ -100,29 +99,14 @@ export function Login() {
               </button>
             </form>
 
-            <div className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-              Belum punya akun?{' '}
-              <Link to="/register" className="text-blue-600 dark:text-blue-400 hover:underline" style={{ fontWeight: 500 }}>
-                Daftar Sekarang
-              </Link>
+            <div className="mt-6 text-sm text-slate-500 dark:text-slate-400 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-4 text-center">
+              <p className="text-sm">
+                Belum punya akun?{' '}
+                <Link to="/register" className="text-blue-600 dark:text-blue-400 hover:underline" style={{ fontWeight: 500 }}>
+                  Daftar Sekarang
+                </Link>
+              </p>
             </div>
-          </div>
-        </div>
-
-        {/* Demo Credentials */}
-        <div className="mt-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 text-center" style={{ fontWeight: 500 }}>Akun Demo (klik untuk isi otomatis)</p>
-          <div className="grid grid-cols-3 gap-2">
-            {DEMOS.map(d => (
-              <button
-                key={d.label}
-                onClick={() => setForm({ email: d.email, password: d.pw })}
-                className="p-2 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-left"
-              >
-                <p className={`text-xs ${d.color} dark:opacity-80`} style={{ fontWeight: 700 }}>{d.label}</p>
-                <p className="text-xs text-slate-400 truncate">{d.email}</p>
-              </button>
-            ))}
           </div>
         </div>
 

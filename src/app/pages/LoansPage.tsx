@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
-  Search, CheckCircle, XCircle, RotateCcw, Clock, Filter,
-  BookMarked, AlertCircle, ChevronDown
+  Search, CheckCircle, XCircle, RotateCcw,
+  BookMarked, AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
@@ -30,7 +30,6 @@ export function LoansPage() {
   const [activeTab, setActiveTab] = useState<LoanStatus | 'all'>('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [actionTarget, setActionTarget] = useState<{ loan: Loan; action: 'approve' | 'reject' | 'return' } | null>(null);
   const [rejectNote, setRejectNote] = useState('');
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectLoanTarget, setRejectLoanTarget] = useState<Loan | null>(null);

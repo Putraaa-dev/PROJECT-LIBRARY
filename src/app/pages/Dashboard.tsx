@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import {
-  BookOpen, Users, ClipboardList, CheckCircle, Clock, XCircle,
-  RotateCcw, TrendingUp, Star, ArrowRight, AlertCircle
+  BookOpen, Users, ClipboardList, CheckCircle, Clock,
+  TrendingUp, Star, ArrowRight, AlertCircle
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useAuth } from '../context/AuthContext';

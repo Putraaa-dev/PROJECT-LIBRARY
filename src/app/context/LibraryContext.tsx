@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { Book, User, Loan, LoanStatus } from '../types';
+import type { Book, User, Loan } from '../types';
 
-const API_URL = '';
+const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 interface LibraryContextType {
   books: Book[];
@@ -70,10 +70,10 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
 
   const updateBook = useCallback(async (id: string, data: Partial<Book>) => {
     try {
-      const res = await fetch(`${API_URL}/api/books`, {
+      const res = await fetch(`${API_URL}/api/books/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, ...data }),
+        body: JSON.stringify(data),
       });
       if (res.ok) { refresh(); return true; }
       return false;
@@ -84,7 +84,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     try {
       const active = loans.filter(l => l.bookId === id && (l.status === 'approved' || l.status === 'pending'));
       if (active.length > 0) return false;
-      const res = await fetch(`${API_URL}/api/books?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_URL}/api/books/${id}`, { method: 'DELETE' });
       if (res.ok) { refresh(); return true; }
       return false;
     } catch { return false; }
@@ -104,10 +104,10 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
 
   const updateUser = useCallback(async (id: string, data: Partial<User>) => {
     try {
-      const res = await fetch(`${API_URL}/api/users`, {
+      const res = await fetch(`${API_URL}/api/users/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, ...data }),
+        body: JSON.stringify(data),
       });
       if (res.ok) { refresh(); return true; }
       return false;
@@ -118,7 +118,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     try {
       const active = loans.filter(l => l.userId === id && (l.status === 'approved' || l.status === 'pending'));
       if (active.length > 0) return false;
-      const res = await fetch(`${API_URL}/api/users?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_URL}/api/users/${id}`, { method: 'DELETE' });
       if (res.ok) { refresh(); return true; }
       return false;
     } catch { return false; }

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { User, Mail, Phone, MapPin, Calendar, Edit, Save, X, Lock, Eye, EyeOff } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Mail, Phone, MapPin, Calendar, Edit, Save, X, Lock, Eye, EyeOff, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { useLibrary } from '../context/LibraryContext';
@@ -17,7 +17,10 @@ export function ProfilePage() {
     phone: currentUser?.phone || '',
     address: currentUser?.address || '',
   });
+  const [avatarPreview, setAvatarPreview] = useState(currentUser?.avatar || '');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
+  const API_URL = import.meta.env.VITE_API_URL ?? '';
 
   if (!currentUser) return null;
 
@@ -32,32 +35,64 @@ export function ProfilePage() {
     user: 'Anggota Perpustakaan',
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) { toast.error('Nama tidak boleh kosong.'); return; }
-    updateProfile(form);
+    const result = await updateProfile({ ...form, avatar: avatarPreview });
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
     setEditing(false);
-    toast.success('Profil berhasil diperbarui!');
+    toast.success(result.message);
   };
 
-  const handleChangePw = () => {
-    const storedUsers = localStorage.getItem('perpus_users');
-    let usersList: any[] = [];
-    if (storedUsers) {
-      usersList = JSON.parse(storedUsers);
-      const me = usersList.find((u: any) => u.id === currentUser.id);
-      if (me && me.password !== pwForm.current) { toast.error('Password saat ini salah.'); return; }
+  const handleAvatarUpload = (file: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      setAvatarPreview(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleChangePw = async () => {
+    if (!pwForm.current || !pwForm.newPw || !pwForm.confirm) {
+      toast.error('Semua kolom password wajib diisi.');
+      return;
     }
     if (pwForm.newPw.length < 6) { toast.error('Password baru minimal 6 karakter.'); return; }
     if (pwForm.newPw !== pwForm.confirm) { toast.error('Konfirmasi password tidak cocok.'); return; }
-    // Update password in storage
-    const idx = usersList.findIndex((u: any) => u.id === currentUser.id);
-    if (idx !== -1) {
-      usersList[idx].password = pwForm.newPw;
-      localStorage.setItem('perpus_users', JSON.stringify(usersList));
+
+    try {
+      const loginRes = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentUser.email, password: pwForm.current }),
+      });
+      if (!loginRes.ok) {
+        toast.error('Password saat ini salah.');
+        return;
+      }
+
+      const updateRes = await fetch(`${API_URL}/api/users/${currentUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwForm.newPw }),
+      });
+
+      if (!updateRes.ok) {
+        const data = await updateRes.json();
+        toast.error(data.error || 'Gagal memperbarui password.');
+        return;
+      }
+
+      setPwForm({ current: '', newPw: '', confirm: '' });
+      setChangePw(false);
+      toast.success('Password berhasil diubah!');
+    } catch {
+      toast.error('Gagal terhubung ke server.');
     }
-    setPwForm({ current: '', newPw: '', confirm: '' });
-    setChangePw(false);
-    toast.success('Password berhasil diubah!');
   };
 
   const initials = currentUser.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -65,177 +100,219 @@ export function ProfilePage() {
   const inputClass = "w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all";
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Profile Card */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-        {/* Header Banner */}
-        <div className="h-28 bg-gradient-to-r from-blue-600 to-blue-800 relative" />
-        <div className="px-6 pb-6">
-          {/* Avatar */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-10 mb-4">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 border-4 border-white dark:border-slate-800 flex items-center justify-center text-white shadow-lg"
-              style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.5rem' }}
-            >
-              {initials}
+    <div className="max-w-6xl mx-auto space-y-6 px-4 pb-10 sm:px-6">
+      <div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
+        <div className="bg-white dark:bg-slate-800 rounded-[30px] border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+          <div className="relative h-32 bg-gradient-to-r from-blue-600 to-sky-500" />
+          <div className="px-6 pb-6 pt-20 sm:px-8">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="relative -mt-16 w-28 h-28 rounded-3xl overflow-hidden border-4 border-white dark:border-slate-800 shadow-xl bg-slate-200 dark:bg-slate-700">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Foto Profil" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.75rem' }}>
+                      {initials}
+                    </div>
+                  )}
+                  {editing && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-2 right-2 rounded-full bg-white/90 p-2 text-slate-700 shadow-sm hover:bg-white"
+                    >
+                      <Camera size={16} />
+                    </button>
+                  )}
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={e => handleAvatarUpload(e.target.files?.[0] ?? null)} />
+                <div>
+                  <p className="text-sm uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">Profil Anggota</p>
+                  <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 dark:text-white">{currentUser.name}</h1>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{ROLE_LABELS[currentUser.role]}</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {!editing ? (
+                  <button onClick={() => { setEditing(true); setForm({ name: currentUser.name, phone: currentUser.phone, address: currentUser.address }); }}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                    <Edit size={14} /> Edit Profil
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={() => setEditing(false)}
+                      className="inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600">
+                      <X size={14} /> Batal
+                    </button>
+                    <button onClick={handleSave}
+                      className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                      <Save size={14} /> Simpan
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="flex gap-2">
-              {!editing ? (
-                <button onClick={() => { setEditing(true); setForm({ name: currentUser.name, phone: currentUser.phone, address: currentUser.address }); }}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm" style={{ fontWeight: 500 }}>
-                  <Edit size={14} /> Edit Profil
-                </button>
+
+            <div className="mt-8 grid gap-6 lg:grid-cols-2">
+              {editing ? (
+                <div className="grid gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Nama Lengkap</label>
+                    <input className={inputClass} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">No. Telepon</label>
+                    <input className={inputClass} placeholder="08xxxxxxxxxx" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+                  </div>
+                  <div className="lg:col-span-2">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Alamat</label>
+                    <textarea className={inputClass + ' min-h-[96px] resize-none'} placeholder="Alamat lengkap" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} />
+                  </div>
+                </div>
               ) : (
-                <>
-                  <button onClick={() => setEditing(false)} className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-sm" style={{ fontWeight: 500 }}>
-                    <X size={14} /> Batal
-                  </button>
-                  <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm" style={{ fontWeight: 500 }}>
-                    <Save size={14} /> Simpan
-                  </button>
-                </>
+                <div className="grid gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge status={currentUser.role} />
+                    <Badge status={currentUser.status} />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {[
+                      { icon: <Mail size={16} />, label: 'Email', value: currentUser.email },
+                      { icon: <Phone size={16} />, label: 'Telepon', value: currentUser.phone || 'Belum diisi' },
+                      { icon: <MapPin size={16} />, label: 'Alamat', value: currentUser.address || 'Belum diisi' },
+                      { icon: <Calendar size={16} />, label: 'Bergabung', value: currentUser.memberSince },
+                    ].map(item => (
+                      <div key={item.label} className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 p-4">
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">{item.label}</p>
+                        <p className="text-sm text-slate-800 dark:text-slate-100 font-medium">{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>
+        </div>
 
-          {editing ? (
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1.5 font-medium">Nama Lengkap</label>
-                <input className={inputClass} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+        <div className="space-y-5">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">Ringkasan Akun</h2>
+            <div className="grid gap-3">
+              <div className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-4">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Status Keanggotaan</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-white">{currentUser.status}</p>
               </div>
-              <div>
-                <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1.5 font-medium">No. Telepon</label>
-                <input className={inputClass} placeholder="08xxxxxxxxxx" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+              <div className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-4">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Peran</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-white">{ROLE_LABELS[currentUser.role]}</p>
               </div>
-              <div className="sm:col-span-2">
-                <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1.5 font-medium">Alamat</label>
-                <input className={inputClass} placeholder="Alamat lengkap" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} />
+              <div className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-4">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Email</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-white break-all">{currentUser.email}</p>
               </div>
             </div>
-          ) : (
-            <div>
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h2 className="text-slate-800 dark:text-white" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.3rem' }}>
-                  {currentUser.name}
-                </h2>
-                <Badge status={currentUser.role} />
-                <Badge status={currentUser.status} />
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">Statistik Peminjaman</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {[
+                { label: 'Dipinjam', value: activeLoans.length, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800/30' },
+                { label: 'Menunggu', value: pendingLoans.length, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/30' },
+                { label: 'Dikembalikan', value: returnedLoans.length, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800/30' },
+              ].map(s => (
+                <div key={s.label} className={`${s.bg} rounded-3xl border p-4 text-center`}>
+                  <p className={`${s.color} text-3xl font-semibold leading-none`}>{s.value}</p>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+          <button
+            onClick={() => setChangePw(p => !p)}
+            className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                <Lock size={18} className="text-slate-500" />
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{ROLE_LABELS[currentUser.role]}</p>
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">Ubah Password</p>
+                <p className="text-xs text-slate-400">Perbarui keamanan akun Anda</p>
+              </div>
+            </div>
+            <span className="text-slate-400">{changePw ? '▲' : '▼'}</span>
+          </button>
+
+          {changePw && (
+            <div className="px-6 pb-6 border-t border-slate-200 dark:border-slate-700 pt-4">
+              <div className="space-y-4">
                 {[
-                  { icon: <Mail size={15} />, label: 'Email', value: currentUser.email },
-                  { icon: <Phone size={15} />, label: 'Telepon', value: currentUser.phone || 'Belum diisi' },
-                  { icon: <MapPin size={15} />, label: 'Alamat', value: currentUser.address || 'Belum diisi' },
-                  { icon: <Calendar size={15} />, label: 'Bergabung', value: currentUser.memberSince },
-                ].map(item => (
-                  <div key={item.label} className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                    <span className="text-blue-500 mt-0.5">{item.icon}</span>
-                    <div>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">{item.label}</p>
-                      <p className="text-sm text-slate-700 dark:text-slate-300" style={{ fontWeight: 500 }}>{item.value}</p>
+                  { label: 'Password Saat Ini', key: 'current', placeholder: 'Password lama' },
+                  { label: 'Password Baru', key: 'newPw', placeholder: 'Min. 6 karakter' },
+                  { label: 'Konfirmasi Password Baru', key: 'confirm', placeholder: 'Ulangi password baru' },
+                ].map(field => (
+                  <div key={field.key}>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">{field.label}</label>
+                    <div className="relative">
+                      <input
+                        type={showPw ? 'text' : 'password'}
+                        placeholder={field.placeholder}
+                        className={inputClass + ' pr-10'}
+                        value={pwForm[field.key as keyof typeof pwForm]}
+                        onChange={e => setPwForm(p => ({ ...p, [field.key]: e.target.value }))}
+                      />
+                      {field.key === 'newPw' && (
+                        <button type="button" onClick={() => setShowPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                          {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button onClick={() => { setChangePw(false); setPwForm({ current: '', newPw: '', confirm: '' }); }}
+                    className="flex-1 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600">
+                    Batal
+                  </button>
+                  <button onClick={handleChangePw}
+                    className="flex-1 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                    Ubah Password
+                  </button>
+                </div>
               </div>
             </div>
           )}
         </div>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Sedang Dipinjam', value: activeLoans.length, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800/30' },
-          { label: 'Menunggu', value: pendingLoans.length, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/30' },
-          { label: 'Dikembalikan', value: returnedLoans.length, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800/30' },
-        ].map(s => (
-          <div key={s.label} className={`${s.bg} rounded-xl p-4 border text-center`}>
-            <p className={`${s.color}`} style={{ fontWeight: 700, fontSize: '1.75rem', lineHeight: 1.2 }}>{s.value}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{s.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Change Password */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-        <button
-          onClick={() => setChangePw(p => !p)}
-          className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center">
-              <Lock size={16} className="text-slate-500" />
+        {myLoans.length > 0 && (
+          <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">Riwayat Peminjaman</h3>
             </div>
-            <div className="text-left">
-              <p className="text-sm text-slate-700 dark:text-slate-200" style={{ fontWeight: 600 }}>Ubah Password</p>
-              <p className="text-xs text-slate-400">Perbarui password akun Anda</p>
-            </div>
-          </div>
-          <span className="text-slate-400">{changePw ? '▲' : '▼'}</span>
-        </button>
-        {changePw && (
-          <div className="px-6 pb-6 border-t border-slate-100 dark:border-slate-700 pt-4">
-            <div className="space-y-3 max-w-sm">
-              {[
-                { label: 'Password Saat Ini', key: 'current', placeholder: 'Password lama' },
-                { label: 'Password Baru', key: 'newPw', placeholder: 'Min. 6 karakter' },
-                { label: 'Konfirmasi Password Baru', key: 'confirm', placeholder: 'Ulangi password baru' },
-              ].map(field => (
-                <div key={field.key}>
-                  <label className="block text-xs text-slate-600 dark:text-slate-300 mb-1.5 font-medium">{field.label}</label>
-                  <div className="relative">
-                    <input
-                      type={showPw ? 'text' : 'password'}
-                      placeholder={field.placeholder}
-                      className={inputClass + ' pr-10'}
-                      value={pwForm[field.key as keyof typeof pwForm]}
-                      onChange={e => setPwForm(p => ({ ...p, [field.key]: e.target.value }))}
-                    />
-                    {field.key === 'newPw' && (
-                      <button type="button" onClick={() => setShowPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
-                        {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-                      </button>
-                    )}
+            <div className="divide-y divide-slate-200 dark:divide-slate-700">
+              {myLoans.slice(0, 6).map(loan => (
+                <div key={loan.id} className="flex items-center gap-3 px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                  <div className={`w-11 h-11 rounded-3xl bg-gradient-to-br ${CATEGORY_COLORS[loan.bookCategory] || 'from-slate-400 to-slate-600'} flex items-center justify-center text-white text-sm font-semibold`}>
+                    {loan.bookTitle[0]}
                   </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{loan.bookTitle}</p>
+                    <p className="text-xs text-slate-400">{loan.requestDate}</p>
+                  </div>
+                  <Badge status={loan.status} />
                 </div>
               ))}
-              <div className="flex gap-3 pt-1">
-                <button onClick={() => { setChangePw(false); setPwForm({ current: '', newPw: '', confirm: '' }); }}
-                  className="flex-1 py-2 text-sm text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 rounded-lg transition-colors" style={{ fontWeight: 500 }}>
-                  Batal
-                </button>
-                <button onClick={handleChangePw} className="flex-1 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors" style={{ fontWeight: 500 }}>
-                  Ubah Password
-                </button>
-              </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* Recent Loans */}
-      {myLoans.length > 0 && (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700">
-            <h3 className="text-slate-700 dark:text-slate-200" style={{ fontWeight: 600 }}>Riwayat Peminjaman</h3>
-          </div>
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
-            {myLoans.slice(0, 6).map(loan => (
-              <div key={loan.id} className="flex items-center gap-4 px-6 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                <div className={`w-8 h-10 rounded-lg bg-gradient-to-br ${CATEGORY_COLORS[loan.bookCategory] || 'from-slate-400 to-slate-600'} flex items-center justify-center text-white text-xs flex-shrink-0`} style={{ fontWeight: 700 }}>
-                  {loan.bookTitle[0]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-1" style={{ fontWeight: 500 }}>{loan.bookTitle}</p>
-                  <p className="text-xs text-slate-400">{loan.requestDate}</p>
-                </div>
-                <Badge status={loan.status} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

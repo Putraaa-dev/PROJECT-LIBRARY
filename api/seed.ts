@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { connectToDatabase } from './lib/db';
 import { DEFAULT_USERS, DEFAULT_BOOKS, DEFAULT_LOANS } from '../src/app/data/mockData';
 import bcrypt from 'bcryptjs';
@@ -9,7 +8,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   Object.entries(corsHeaders).forEach(([key, value]) => res.setHeader(key, value));
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -23,6 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const hashedUsers = await Promise.all(
         DEFAULT_USERS.map(async (u) => ({
           ...u,
+          // simpan _id tetap sesuai mockData (string) agar UI yang pakai legacy id tetap jalan
           _id: u.id,
           password: await bcrypt.hash(u.password, 10),
         }))

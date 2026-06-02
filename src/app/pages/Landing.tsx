@@ -1,19 +1,18 @@
 import { Link, useNavigate } from 'react-router';
-import { BookOpen, Search, Users, Clock, Star, ArrowRight, ChevronRight, Library, Shield, BookMarked } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Bookmark, Clock3, Globe2, Search, ShieldCheck, Sparkles, Star, Users, ChevronRight } from 'lucide-react';
 import { useLibrary } from '../context/LibraryContext';
 import { useAuth } from '../context/AuthContext';
 import { CATEGORY_COLORS } from '../data/mockData';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 const HERO_IMG = 'https://images.unsplash.com/photo-1764406807567-a24faaaad034?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBsaWJyYXJ5JTIwaW50ZXJpb3IlMjBhcmNoaXRlY3R1cmV8ZW58MXx8fHwxNzc2NzY1ODg3fDA&ixlib=rb-4.1.0&q=80&w=1080';
-const BOOKS_IMG = 'https://images.unsplash.com/photo-1771647287015-f30dbb239646?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsaWJyYXJ5JTIwYm9va3MlMjByZWFkaW5nJTIwZWxlZ2FudHxlbnwxfHx8fDE3NzY3NjU4ODJ8MA&ixlib=rb-4.1.0&q=80&w=1080';
-const SHELF_IMG = 'https://images.unsplash.com/photo-1761319115156-d758b22ed57b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjbGFzc2ljJTIwYm9va3NoZWxmJTIwY29sbGVjdGlvbiUyMGxpdGVyYXR1cmV8ZW58MXx8fHwxNzc2NzY1ODg3fDA&ixlib=rb-4.1.0&q=80&w=1080';
+const LOGO_IMG = '/icons/LibraryTogether-removebg-preview.png';
 
 const FEATURES = [
   { icon: <Search size={22} className="text-blue-600" />, title: 'Cari Buku Mudah', desc: 'Temukan ribuan buku dengan sistem pencarian cerdas berdasarkan judul, pengarang, atau kategori.' },
-  { icon: <BookMarked size={22} className="text-blue-600" />, title: 'Pinjam Online', desc: 'Ajukan peminjaman buku secara online tanpa harus mengantri di perpustakaan.' },
-  { icon: <Clock size={22} className="text-blue-600" />, title: 'Lacak Status', desc: 'Pantau status peminjaman buku Anda secara real-time dari mana saja.' },
-  { icon: <Shield size={22} className="text-blue-600" />, title: 'Akses Aman', desc: 'Sistem keamanan berlapis dengan autentikasi berbasis peran untuk setiap pengguna.' },
+  { icon: <Bookmark size={22} className="text-blue-600" />, title: 'Pinjam Online', desc: 'Ajukan peminjaman buku secara online tanpa harus mengantri di perpustakaan.' },
+  { icon: <Clock3 size={22} className="text-blue-600" />, title: 'Lacak Status', desc: 'Pantau status peminjaman buku Anda secara real-time dari mana saja.' },
+  { icon: <Sparkles size={22} className="text-blue-600" />, title: 'Akses Aman', desc: 'Sistem keamanan berlapis dengan autentikasi berbasis peran untuk setiap pengguna.' },
 ];
 
 const HOW_IT_WORKS = [
@@ -34,7 +33,10 @@ export function Landing() {
     }
   }, [isAuthenticated, navigate]);
 
-  const topBooks = books.filter(b => b.rating >= 4.5).slice(0, 4);
+  const randomBooks = useMemo(() => {
+    if (books.length === 0) return [];
+    return [...books].sort(() => 0.5 - Math.random()).slice(0, Math.min(6, books.length));
+  }, [books]);
   const categories = [...new Set(books.map(b => b.category))].slice(0, 8);
 
   return (
@@ -43,11 +45,9 @@ export function Landing() {
       <nav className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-sm">
-              <BookOpen size={18} className="text-white" />
-            </div>
+            <img src={LOGO_IMG} alt="LibraryTogether Logo" className="w-9 h-9 object-contain shadow-sm" />
             <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.2rem', color: '#1e293b' }} className="dark:text-white">
-              Perpustakaan
+              LibraryTogether
             </span>
           </Link>
           <div className="hidden md:flex items-center gap-6 text-sm text-slate-600 dark:text-slate-300">
@@ -75,17 +75,17 @@ export function Landing() {
         <div className="relative max-w-7xl mx-auto px-4 py-20 grid md:grid-cols-2 gap-12 items-center">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border border-blue-500/30 rounded-full text-blue-300 text-xs mb-6" style={{ fontWeight: 600 }}>
-              <Library size={13} /> Perpustakaan Digital Modern
+              <Globe2 size={13} /> Akses Koleksi Buku Populer
             </div>
             <h1 className="text-white mb-4 leading-tight" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 'clamp(2rem, 5vw, 3.2rem)' }}>
-              Temukan Dunia Tanpa Batas <span className="text-blue-400">Melalui Buku</span>
+              Temukan Dunia Baru <span className="text-blue-400">Melalui Buku</span>
             </h1>
             <p className="text-slate-300 text-lg mb-8 leading-relaxed">
               Akses ribuan koleksi buku terbaik dari berbagai genre. Pinjam, baca, dan kembalikan — semuanya mudah dengan sistem perpustakaan digital kami.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link to="/register" className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-lg" style={{ fontWeight: 600 }}>
-                Mulai Sekarang <ArrowRight size={16} />
+                Mulai Sekarang <ArrowUpRight size={16} />
               </Link>
               <Link to="/login" className="flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 text-white rounded-xl hover:bg-white/20 transition-colors backdrop-blur-sm" style={{ fontWeight: 500 }}>
                 Sudah Punya Akun <ChevronRight size={16} />
@@ -97,8 +97,8 @@ export function Landing() {
             {[
               { label: 'Koleksi Buku', value: books.length + '+', icon: <BookOpen size={20} className="text-blue-400" /> },
               { label: 'Anggota Aktif', value: users.filter(u => u.role === 'user').length + '+', icon: <Users size={20} className="text-green-400" /> },
-              { label: 'Peminjaman', value: loans.length + '+', icon: <BookMarked size={20} className="text-purple-400" /> },
-              { label: 'Kategori', value: categories.length + '+', icon: <Library size={20} className="text-orange-400" /> },
+              { label: 'Peminjaman', value: loans.length + '+', icon: <Bookmark size={20} className="text-purple-400" /> },
+              { label: 'Kategori', value: categories.length + '+', icon: <ShieldCheck size={20} className="text-orange-400" /> },
             ].map(stat => (
               <div key={stat.label} className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-5">
                 <div className="mb-2">{stat.icon}</div>
@@ -106,6 +106,61 @@ export function Landing() {
                 <p className="text-slate-300 text-sm">{stat.label}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Books */}
+      <section id="buku" className="py-16 bg-slate-50 dark:bg-slate-800">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-8">
+            <div>
+              <p className="text-blue-600 dark:text-blue-400 text-sm mb-2" style={{ fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                Buku Populer
+              </p>
+              <h2 className="text-slate-800 dark:text-white" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}>
+                Koleksi Buku Langsung di Halaman Utama
+              </h2>
+            </div>
+            <Link to="/login" className="inline-flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline" style={{ fontWeight: 500 }}>
+              Lihat Selengkapnya <ArrowUpRight size={16} />
+            </Link>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {randomBooks.slice(0, 4).map(book => {
+              const gradient = CATEGORY_COLORS[book.category] || 'from-slate-500 to-slate-700';
+              return (
+                <div key={book.id} className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-xl transition-all duration-200 group">
+                  <div className={`h-48 bg-gradient-to-br ${gradient} flex items-center justify-center relative overflow-hidden`}>
+                    {book.cover ? (
+                      <img 
+                        src={book.cover} 
+                        alt={book.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="text-center text-white w-full h-full flex flex-col items-center justify-center">
+                        <div className="w-14 h-14 bg-white/15 rounded-3xl backdrop-blur flex items-center justify-center mx-auto mb-2">
+                          <span className="text-xl font-black tracking-tight">{book.title.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()}</span>
+                        </div>
+                        <span className="text-xs bg-black/20 px-2 py-0.5 rounded-full">{book.category}</span>
+                      </div>
+                    )}
+                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/40 backdrop-blur px-2 py-1 rounded-full hover:bg-black/60 transition-colors">
+                      <Star size={10} className="text-amber-300 fill-amber-300" />
+                      <span className="text-white text-xs font-semibold">{book.rating}</span>
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <h3 className="text-slate-900 dark:text-white mb-2 font-semibold text-sm line-clamp-2">{book.title}</h3>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mb-4">{book.author}</p>
+                    <Link to="/login" className="inline-flex items-center justify-center w-full gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-colors">
+                      Pinjam Sekarang <ArrowUpRight size={16} />
+                    </Link>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -136,31 +191,39 @@ export function Landing() {
       {/* Top Books */}
       <section id="katalog" className="py-20 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between mb-8">
             <div>
-              <p className="text-blue-600 dark:text-blue-400 text-sm mb-2" style={{ fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Pilihan Terbaik</p>
+              <p className="text-blue-600 dark:text-blue-400 text-sm mb-2" style={{ fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Rekomendasi Buku</p>
               <h2 className="text-slate-800 dark:text-white" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}>
-                Buku Paling Populer
+                Pilihan Acak dari Koleksi Kami
               </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 max-w-2xl">Setiap kali kamu kembali, sistem akan menampilkan beberapa pilihan buku acak langsung dari database perpustakaan.</p>
             </div>
-            <Link to="/login" className="hidden md:flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline" style={{ fontWeight: 500 }}>
+            <Link to="/login" className="inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline" style={{ fontWeight: 500 }}>
               Lihat Semua <ChevronRight size={16} />
             </Link>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {topBooks.map(book => {
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {randomBooks.map(book => {
               const gradient = CATEGORY_COLORS[book.category] || 'from-slate-500 to-slate-700';
-              const initials = book.title.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
               return (
                 <div key={book.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group">
-                  <div className={`h-44 bg-gradient-to-br ${gradient} flex items-center justify-center relative`}>
-                    <div className="text-center text-white">
-                      <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-2">
-                        <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.3rem' }}>{initials}</span>
+                  <div className={`h-56 bg-gradient-to-br ${gradient} flex items-center justify-center relative overflow-hidden`}>
+                    {book.cover ? (
+                      <img 
+                        src={book.cover} 
+                        alt={book.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="text-center text-white w-full h-full flex flex-col items-center justify-center">
+                        <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                          <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.3rem' }}>{book.title.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()}</span>
+                        </div>
+                        <span className="text-xs bg-black/20 px-2 py-0.5 rounded-full">{book.category}</span>
                       </div>
-                      <span className="text-xs bg-black/20 px-2 py-0.5 rounded-full">{book.category}</span>
-                    </div>
-                    <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/30 backdrop-blur px-2 py-1 rounded-full">
+                    )}
+                    <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/40 backdrop-blur px-2 py-1 rounded-full hover:bg-black/60 transition-colors">
                       <Star size={10} className="text-amber-400 fill-amber-400" />
                       <span className="text-white text-xs" style={{ fontWeight: 600 }}>{book.rating}</span>
                     </div>
@@ -241,7 +304,6 @@ export function Landing() {
               Sudah Punya Akun
             </Link>
           </div>
-          <p className="text-blue-200 text-sm mt-4">Demo: admin@perpus.id / admin123</p>
         </div>
       </section>
 
@@ -250,12 +312,10 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <BookOpen size={14} className="text-white" />
-              </div>
-              <span className="text-white" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600 }}>Perpustakaan Digital</span>
+              <img src={LOGO_IMG} alt="LibraryTogether Logo" className="w-8 h-8 object-contain" />
+              <span className="text-white" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600 }}>LibraryTogether</span>
             </div>
-            <p className="text-slate-400 text-sm text-center">© 2026 Perpustakaan Digital. Dibuat dengan ❤️ untuk para pembaca Indonesia.</p>
+            <p className="text-slate-400 text-sm text-center">© 2026 LibraryTogether. Dibuat dengan ❤️ untuk para pembaca Indonesia.</p>
             <div className="flex gap-6 text-sm text-slate-400">
               <a href="#" className="hover:text-white transition-colors">Kebijakan</a>
               <a href="#" className="hover:text-white transition-colors">Tentang</a>

@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { connectToDatabase } from './lib/db';
 import { ObjectId } from 'mongodb';
 
@@ -8,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   Object.entries(corsHeaders).forEach(([key, value]) => res.setHeader(key, value));
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -31,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (existing) return res.status(409).json({ error: 'Email already exists' });
       const newUser: any = {
         ...user,
-        _id: new ObjectId().toString(),
+        _id: new ObjectId(),
         memberSince: new Date().toISOString().split('T')[0],
         totalLoans: 0,
         status: user.status || 'active',
@@ -43,14 +42,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'PUT') {
       const { id, ...data } = req.body;
+      if (!id) return res.status(400).json({ error: 'User ID required' });
       if (data.password === '' || data.password === null) delete data.password;
-      await collection.updateOne({ _id: id as any }, { $set: data });
+      try {
+        const objectId = new ObjectId(id);
+        await collection.updateOne({ _id: objectId }, { $set: data });
+      } catch {
+        // Fallback untuk string ID
+        await collection.updateOne({ _id: id }, { $set: data });
+      }
       return res.status(200).json({ success: true });
     }
 
     if (req.method === 'DELETE') {
       const { id } = req.query;
-      await collection.deleteOne({ _id: id as any });
+      if (!id) return res.status(400).json({ error: 'User ID required' });
+      try {
+        const objectId = new ObjectId(id as string);
+        await collection.deleteOne({ _id: objectId });
+      } catch {
+        // Fallback untuk string ID
+        await collection.deleteOne({ _id: id as string });
+      }
       return res.status(200).json({ success: true });
     }
 

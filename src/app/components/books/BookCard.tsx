@@ -1,4 +1,4 @@
-import { Star, BookOpen, User, Calendar, Tag } from 'lucide-react';
+import { Star, BookOpen, User, Calendar } from 'lucide-react';
 import type { Book } from '../../types';
 import { CATEGORY_COLORS } from '../../data/mockData';
 
